@@ -1,7 +1,10 @@
 const express = require('express');
 const {client} = require("../index");
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
+app.options('*', cors());
 
 app.get('/', (req, res) => {
     res.send('Hello World');
