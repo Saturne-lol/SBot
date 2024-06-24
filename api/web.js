@@ -12,7 +12,16 @@ app.get('/', (req, res) => {
 
 app.get('/member/:id', async (req, res) => {
     if (!req.params.id) return res.status(400).json({error: 'Missing id'})
+    console.log(await client.guilds.cache.get('1129015826410901556')?.members.cache.get(req.params.id)?.presence?.activities.find(a => a.type === 4))
     return await client.guilds.cache.get('1129015826410901556')?.members.fetch(req.params.id).then(m => {
+            const activity = m.presence.activities.find(a => a.type === 4)
+            const resActivity = activity ? {
+                text: activity.state,
+                ...activity.emoji ? {
+                    emoji: activity.emoji.id ? `https://cdn.discordapp.com/emojis/${activity.emoji.id}.${activity.emoji.animated ? 'gif' : 'png'}` : activity.emoji.name
+                } : {}
+            } : null
+
             return res.json({
                 id: m.id,
                 username: m.user.username,
@@ -22,7 +31,7 @@ app.get('/member/:id', async (req, res) => {
                 joinedAt: m.joinedAt,
                 createdAt: m.user.createdAt,
                 presence: m.presence.status,
-                voice: m.voice.channel ? m.voice.channel.id : null
+                ...(resActivity ? {activity: resActivity} : {})
             })
         }
     ).catch(() => {
