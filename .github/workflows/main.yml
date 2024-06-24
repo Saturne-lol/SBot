@@ -1,0 +1,64 @@
+name: Saturne API Deployment
+on:
+  push:
+    branches:
+      - deployment
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: deployment
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Install rsync on remote
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'sudo apt-get update && sudo apt-get install -y rsync'
+        shell: bash
+
+      - name: Clean remote directory
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'rm -rf /root/bot/*'
+        shell: bash
+
+      - name: Upload via rsync
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: rsync -avz --delete ./ ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }}:/root/bot
+        shell: bash
+
+      - name: Install npm dependencies on remote
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'export NVM_DIR="$HOME/.nvm" && 
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && 
+          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && 
+          cd /root/bot && npm install'
+        shell: bash
+
+      - name: Restart pm2
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'export NVM_DIR="$HOME/.nvm" && 
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && 
+          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && 
+          pm2 restart all'
+        shell: bash

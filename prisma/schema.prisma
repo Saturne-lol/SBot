@@ -1,0 +1,111 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id          String    @id
+  create_date DateTime  @default(now())
+  plan        PlanEnum  @default(FREE)
+  blacklisted Boolean   @default(false)
+  last_login  DateTime  @default(now())
+  last_ip     String?
+  expires     DateTime  @default(now())
+  beta        Boolean   @default(false)
+  admin       Boolean   @default(false)
+  username    String?   @default("No username")
+  badges      Badges[]
+  discord     Discord[]
+  quotes      Quotes[]
+  setting     Setting?
+  social      Social?
+  view        View[]
+  Color       Color[]
+}
+
+model Badges {
+  id         String  @id @default(dbgenerated("(uuid())"))
+  account_id String
+  badge      String
+  account    Account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@index([account_id], map: "Badges_account_id_fkey")
+}
+
+model Discord {
+  account_id String
+  invite     String
+  index      Int     @default(0)
+  account    Account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@unique([account_id, index])
+  @@unique([account_id, invite])
+}
+
+model Quotes {
+  account_id String
+  text       String
+  account    Account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@unique([account_id, text])
+}
+
+model Setting {
+  account_id    String  @id @unique
+  url           String  @unique @default(dbgenerated("(uuid())"))
+  username      String  @default(dbgenerated("(uuid())"))
+  bio           String  @default("No bio")
+  enter_message String  @default("Click to enter...")
+  background    String  @default("https://i.imgur.com/3v3J9v6.jpg")
+  views         Boolean @default(true)
+  account       Account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  view          View[]
+}
+
+model Social {
+  account_id String  @id
+  type       String
+  url        String
+  index      Int     @default(0)
+  account    Account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@unique([account_id, index])
+}
+
+model View {
+  id         String   @id @default(dbgenerated("(uuid())"))
+  ip         String
+  date       DateTime @default(now())
+  profile_id String
+  account_id String?
+  account    Account? @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  setting    Setting  @relation(fields: [profile_id], references: [account_id], onDelete: Cascade)
+
+  @@unique([ip, profile_id])
+  @@index([account_id], map: "View_account_id_fkey")
+  @@index([profile_id], map: "View_profile_id_fkey")
+}
+
+model Color {
+  account_id      String  @id
+  user            Account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  box             String  @default("#FFFFFF")
+  box_outline     String  @default("#FFFFFF")
+  profile_outline String  @default("#FFFFFF")
+  icon_color      String  @default("#FFFFFF")
+  display_name    String  @default("#FFFFFF")
+  quotes          String  @default("#FFFFFF")
+  description     String  @default("#FFFFFF")
+  box_glows       String  @default("#FFFFFF")
+}
+
+enum PlanEnum {
+  FREE
+  PREMIUM
+  PREMIUM_PLUS
+}
