@@ -1,4 +1,4 @@
-name: Saturne API Deployment
+name: Saturne Bot Deployment
 on:
   push:
     branches:
