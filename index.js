@@ -2,6 +2,7 @@ require("dotenv").config();
 const {Client, GatewayIntentBits, Partials, Collection} = require("discord.js");
 const {greenBright, redBright} = require("cli-color");
 const configFile = require("./config.json");
+const {PrismaClient} = require("@prisma/client");
 const client = new Client({
 	intents: [
 		GatewayIntentBits.DirectMessageReactions,
@@ -31,6 +32,7 @@ console.log(greenBright.bold.underline("Lancement du bot :"));
 
 //Mise en cache de la config :
 client.config = configFile;
+client.prisma = new PrismaClient();
 
 //Création des collections discords pour les handlers :
 client.commands = new Collection();
@@ -49,7 +51,7 @@ require("./api/web.js");
 });
 console.log(greenBright.bold.underline("Connection à discord…"));
 //Connection du bot :
-client.login(process.env.TOKEN).catch((reason) => {
+client.login(process.env.DEV ? process.env.TOKENDEV : process.env.TOKEN).catch((reason) => {
 	console.log(redBright.bold("La connection à discord à échoué !"));
 	switch (reason.code) {
 		case "ENOTFOUND":
