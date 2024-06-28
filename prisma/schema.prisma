@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = "mysql://root:th4if%TL%vA9U*@212.227.179.23:3306/saturne"
 }
 
 model Account {
@@ -85,8 +85,10 @@ model View {
   account_id String?
   account    Account? @relation(fields: [account_id], references: [id], onDelete: Cascade)
   setting    Setting  @relation(fields: [profile_id], references: [account_id], onDelete: Cascade)
+  check      Boolean  @default(false)
 
   @@unique([ip, profile_id])
+  @@unique([profile_id, account_id])
   @@index([account_id], map: "View_account_id_fkey")
   @@index([profile_id], map: "View_profile_id_fkey")
 }

@@ -15,6 +15,9 @@ jobs:
         with:
           ref: deployment
 
+      - name: .env to DEV=false
+        run: echo "DEV=false" >> .env
+
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:

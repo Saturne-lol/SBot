@@ -12,32 +12,28 @@ app.get('/', (req, res) => {
 
 app.get('/member/:id', async (req, res) => {
     if (!req.params.id) return res.status(400).json({error: 'Missing id'})
-    console.log(await client.guilds.cache.get('1129015826410901556')?.members.cache.get(req.params.id)?.presence?.activities.find(a => a.type === 4))
-    return await client.guilds.cache.get('1129015826410901556')?.members.fetch(req.params.id).then(m => {
-            const activity = m.presence.activities.find(a => a.type === 4)
-            const resActivity = activity ? {
-                text: activity.state,
-                ...activity.emoji ? {
-                    emoji: activity.emoji.id ? `https://cdn.discordapp.com/emojis/${activity.emoji.id}.${activity.emoji.animated ? 'gif' : 'png'}` : activity.emoji.name
-                } : {}
-            } : null
+    const m = await (await client.guilds.cache.get('1129015826410901556')?.members.fetch(req.params.id))
+    if (!m) return res.status(404).json({error: 'Member not found'})
+    
+    const activity = m?.presence?.activities.find(a => a.type === 4)
+    const resActivity = activity ? {
+        text: activity.state,
+        ...activity.emoji ? {
+            emoji: activity.emoji.id ? `https://cdn.discordapp.com/emojis/${activity.emoji.id}.${activity.emoji.animated ? 'gif' : 'png'}` : activity.emoji.name
+        } : {}
+    } : null
 
-            return res.json({
-                id: m.id,
-                username: m.user.username,
-                displayName: m.displayName,
-                avatar: m.user.displayAvatarURL({dynamic: true, extension: "png"}),
-                roles: m.roles.cache.map(r => r.id),
-                joinedAt: m.joinedAt,
-                createdAt: m.user.createdAt,
-                presence: m.presence.status,
-                ...(resActivity ? {activity: resActivity} : {})
-            })
-        }
-    ).catch(() => {
-        return res.status(404).json({error: 'Member not found'})
+    return res.json({
+        id: m.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.displayAvatarURL({dynamic: true, extension: "png"}),
+        roles: m.roles.cache.map(r => r.id),
+        joinedAt: m.joinedAt,
+        createdAt: m.user.createdAt,
+        presence: m.presence?.status || 'offline',
+        ...(resActivity ? {activity: resActivity} : {})
     })
-
 })
 
 app.listen(3001, () => {
