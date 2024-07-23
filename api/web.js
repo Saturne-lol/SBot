@@ -12,7 +12,7 @@ app.get('/', (req, res) => {
 
 app.get('/member/:id', async (req, res) => {
     if (!req.params.id) return res.status(400).json({error: 'Missing id'})
-    const m = await (await client.guilds.cache.get('1129015826410901556')?.members.fetch(req.params.id))
+    const m = await (await client.guilds.cache.get('1129015826410901556')?.members.fetch(req.params.id).catch(() => null) || null)
     if (!m) return res.status(404).json({error: 'Member not found'})
     
     const activity = m?.presence?.activities.find(a => a.type === 4)
