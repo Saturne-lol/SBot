@@ -19,18 +19,25 @@ module.exports = {
      * @param {Client} client
      */
     runInteraction: async (client, interaction) => {
+        await interaction.deferReply()
         const profile = await client.prisma.setting.findUnique({
             where: {account_id: interaction.user.id}
         })
 
-        if (!profile) return interaction.reply({content: "Vous n'avez pas de profile.", ephemeral:true})
+        if (!profile) return interaction.editReply({content: "Vous n'avez pas de profile."})
 
         const views = await client.prisma.view.count({
             where: {profile_id: profile.account_id}
         })
 
-        const badgesList = await axios.get(`https://saturne.lol/api/profile/get-badges?username=${profile.username}`).then(r => r.data)
+        const badgesList = await axios.get(`https://saturne.lol/api/profile/get-badges?username=${profile.url}`,{timeout: 5000}).then(r => r.data).catch((e) => {
+            console.log(e)
+            return []
+        })
         const badges = badgesList.filter(b => emojisBadge.find(e => e.id === b.image)).map(b => emojisBadge.find(e => e.id === b.image).emoji).join(" • ")
+
+
+        console.log("ok 3")
 
         const embed = new EmbedBuilder()
             .setTitle(`${profile.username} - Saturne.lol`)
@@ -39,6 +46,6 @@ module.exports = {
             .setThumbnail(`https://cdn.saturne.lol/file/profile/${profile.account_id}`)
             .setColor("#2C2F33")
 
-        interaction.reply({embeds: [embed]})
+        return interaction.editReply({embeds: [embed]})
     },
 };
