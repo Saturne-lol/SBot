@@ -51,7 +51,6 @@ require("./api/web.js");
 });
 console.log(greenBright.bold.underline("Connection à discord…"));
 //Connection du bot :
-const isLinux = process.platform === "linux";
 client.login(process.platform === "linux" ? process.env.TOKEN : process.env.TOKENDEV).catch((reason) => {
     console.log(redBright.bold("La connection à discord à échoué !"));
     switch (reason.code) {
